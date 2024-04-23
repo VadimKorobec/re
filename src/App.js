@@ -1,23 +1,26 @@
-import logo from './logo.svg';
-import './App.css';
+import { useDispatch, useSelector } from "react-redux";
+import "./App.css";
+import { NewTodo } from "./NewTodo";
+import { removeTodo, toggleTodo } from "./store";
 
 function App() {
+  const todos = useSelector((state) => state);
+  const dispatch = useDispatch();
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <NewTodo />
+      {todos.map((todo) => (
+        <li key={todo.id}>
+          <input
+            type="checkbox"
+            checked={todo.completed}
+            onChange={() => dispatch(toggleTodo(todo.id))}
+          />{" "}
+          {todo.title}{" "}
+          <button onClick={() => dispatch(removeTodo(todo.id))}>delete</button>
+        </li>
+      ))}
     </div>
   );
 }
