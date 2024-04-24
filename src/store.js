@@ -1,5 +1,18 @@
-import { nanoid, createSlice, configureStore } from "@reduxjs/toolkit";
-import logger from "redux-logger";
+import { configureStore } from "@reduxjs/toolkit";
+import { filterReducer } from "./features/Filters/filtersSlice";
+import { todoReducer } from "./features/Todos/todosSlice";
+import {
+  persistStore,
+  persistReducer,
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+} from "redux-persist";
+import storage from "redux-persist/lib/storage";
+import { combineReducers } from "@reduxjs/toolkit";
 
 // export const addTodo = createAction("todos/ADD_TODO", (title) => ({
 //   payload: {
@@ -30,66 +43,27 @@ import logger from "redux-logger";
 //     });
 // });
 
-const todoSlice = createSlice({
-  name: "todos",
-  initialState: [],
-  reducers: {
-    addTodo: {
-      reducer(state, action) {
-        return [...state, action.payload];
-      },
-      prepare: (title) => ({
-        payload: {
-          id: nanoid(),
-          title,
-          completed: false,
-        },
-      }),
-    },
-    removeTodo: (state, action) => {
-      return state.filter((todo) => todo.id !== action.payload);
-    },
-    toggleTodo: (state, action) => {
-      return state.map((todo) =>
-        todo.id === action.payload
-          ? { ...todo, completed: !todo.completed }
-          : todo
-      );
-    },
-  },
+const rootReducer = combineReducers({
+  todos: todoReducer,
+  filter: filterReducer,
 });
 
-const filterSlice = createSlice({
-  name: "filter",
-  initialState: "all",
-  reducers: {
-    setFilter: (_, action) => {
-      return action.payload;
-    },
-  },
-});
+const persistConfig = {
+  key: "root",
+  storage,
+};
 
-export const { addTodo, removeTodo, toggleTodo } = todoSlice.actions;
-export const { setFilter } = filterSlice.actions;
+const persitedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
-  reducer: {
-    todos: todoSlice.reducer,
-    filter: filterSlice.reducer,
-  },
+  reducer: persitedReducer,
   devTools: true,
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+      },
+    }),
 });
 
-export const selectVisibleTodos = (state, filter) => {
-  switch (filter) {
-    case "all":
-      return state.todos;
-    case "active":
-      return state.todos.filter((todo) => !todo.completed);
-    case "completed":
-      return state.todos.filter((todo) => todo.completed);
-    default:
-      return state;
-  }
-};
+export const persistor = persistStore(store);

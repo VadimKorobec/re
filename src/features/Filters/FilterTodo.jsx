@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { setFilter } from "./store";
+import { setFilter } from "./filtersSlice";
 
 export const FilterTodo = () => {
   const activeFilter = useSelector((state) => state.filter);
