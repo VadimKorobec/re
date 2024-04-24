@@ -1,23 +1,26 @@
 import { useDispatch, useSelector } from "react-redux";
 import "./App.css";
 import { NewTodo } from "./NewTodo";
-import { removeTodo, toggleTodo } from "./store";
+import { removeTodo, selectVisibleTodos, toggleTodo } from "./store";
+import { FilterTodo } from "./FilterTodo";
 
 function App() {
-  const todos = useSelector((state) => state);
+  const activeFilter = useSelector((state) => state.filter);
+  const todos = useSelector((state) => selectVisibleTodos(state, activeFilter));
   const dispatch = useDispatch();
 
   return (
     <div className="App">
       <NewTodo />
+      <FilterTodo />
       {todos.map((todo) => (
         <li key={todo.id}>
           <input
             type="checkbox"
             checked={todo.completed}
             onChange={() => dispatch(toggleTodo(todo.id))}
-          />{" "}
-          {todo.title}{" "}
+          />
+          <p>{todo.title}</p>
           <button onClick={() => dispatch(removeTodo(todo.id))}>delete</button>
         </li>
       ))}

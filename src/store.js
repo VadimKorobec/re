@@ -1,52 +1,95 @@
-import { createStore, nanoid } from "@reduxjs/toolkit";
-import { createAction } from "@reduxjs/toolkit";
-import { devToolsEnhancer } from "@redux-devtools/extension";
+import { nanoid, createSlice, configureStore } from "@reduxjs/toolkit";
+import logger from "redux-logger";
 
-// export const addTodo = (title) => {
-//   return {
-//     type: "ADD_TODO",
+// export const addTodo = createAction("todos/ADD_TODO", (title) => ({
+//   payload: {
 //     title,
-//   };
-// };
+//     id: nanoid(),
+//     completed: false,
+//   },
+// }));
 
-export const addTodo = createAction("todos/ADD_TODO", (title) => ({
-  payload: {
-    title,
-    id: nanoid(),
-    completed: false,
-  },
-}));
+// export const removeTodo = createAction("todos/REMOVE_TODO");
 
-// export const removeTodo = (id) => ({
-//   type: "REMOVE_TODO",
-//   id,
+// export const toggleTodo = createAction("todos/TOGGLE_TODO");
+
+// const todos = createReducer([], (builder) => {
+//   builder
+//     .addCase(addTodo, (state, action) => {
+//       return [...state, action.payload];
+//     })
+//     .addCase(removeTodo, (state, action) => {
+//       return state.filter((todo) => todo.id !== action.payload);
+//     })
+//     .addCase(toggleTodo, (state, action) => {
+//       return state.map((todo) =>
+//         todo.id === action.payload
+//           ? { ...todo, completed: !todo.completed }
+//           : todo
+//       );
+//     });
 // });
 
-export const removeTodo = createAction("todos/REMOVE_TODO");
-
-// export const toggleTodo = (id) => ({
-//   type: "TOGGLE_TODO",
-//   id,
-// });
-
-export const toggleTodo = createAction("todos/TOGGLE_TODO");
-
-const todos = (state = [], action) => {
-  switch (action.type) {
-    case addTodo.toString():
-      return [...state, action.payload];
-    case removeTodo.toString():
+const todoSlice = createSlice({
+  name: "todos",
+  initialState: [],
+  reducers: {
+    addTodo: {
+      reducer(state, action) {
+        return [...state, action.payload];
+      },
+      prepare: (title) => ({
+        payload: {
+          id: nanoid(),
+          title,
+          completed: false,
+        },
+      }),
+    },
+    removeTodo: (state, action) => {
       return state.filter((todo) => todo.id !== action.payload);
-    case toggleTodo.toString():
+    },
+    toggleTodo: (state, action) => {
       return state.map((todo) =>
         todo.id === action.payload
           ? { ...todo, completed: !todo.completed }
           : todo
       );
+    },
+  },
+});
+
+const filterSlice = createSlice({
+  name: "filter",
+  initialState: "all",
+  reducers: {
+    setFilter: (_, action) => {
+      return action.payload;
+    },
+  },
+});
+
+export const { addTodo, removeTodo, toggleTodo } = todoSlice.actions;
+export const { setFilter } = filterSlice.actions;
+
+export const store = configureStore({
+  reducer: {
+    todos: todoSlice.reducer,
+    filter: filterSlice.reducer,
+  },
+  devTools: true,
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
+});
+
+export const selectVisibleTodos = (state, filter) => {
+  switch (filter) {
+    case "all":
+      return state.todos;
+    case "active":
+      return state.todos.filter((todo) => !todo.completed);
+    case "completed":
+      return state.todos.filter((todo) => todo.completed);
     default:
       return state;
   }
 };
-
-const enhancer = devToolsEnhancer();
-export const store = createStore(todos, enhancer);

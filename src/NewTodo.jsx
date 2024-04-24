@@ -7,6 +7,9 @@ export const NewTodo = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const form = e.target;
+    if (!form.title.value) {
+      return;
+    }
     dispatch(addTodo(form.title.value));
 
     form.reset();
